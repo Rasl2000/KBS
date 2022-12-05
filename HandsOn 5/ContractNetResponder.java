@@ -118,17 +118,10 @@ public class ContractNetResponderAgent extends Agent {
                     clips.build("(deftemplate foundDisease (slot foundName))");
 				
                     clips.build("(deffacts enfermedades"
-                    +"(enfermedad (nombre rubeola) (sintomas \"febricula\" \"malestar general\" \"linfadenopatias\" \"facial pressure\")"
-                    +"(tratamiento \"reposo\"))"
+                    +"(enfermedad (nombre Gripe) (sintomas \"Dificultad para respirar\" \"Malestar general\" \"Nariz tapada\")"
+                    +"(tratamiento \"AntiFlu\"))"
                     
-                    +"(enfermedad (nombre varicela) (sintomas \"fiebre\" \"cefalea\" \"hiporexia\" \"dolor abdominal\")"
-                    +"(tratamiento \"paracetamol\"))"
-                    
-                    +"(enfermedad (nombre sarampion) (sintomas \"rinitis\" \"conjuntivitis\" \"faringitis\" \"tos seca\")" 
-                    +"(tratamiento \"vitamina a\"))"
-                    
-                    +"(enfermedad (nombre pie mano boca) (sintomas \"anorexia\" \"odinofagia\")" 
-                    +"(tratamiento \"no comer comida picante \" ))"
+                
                     clips.reset();
                 } catch (Exception e) {
                   e.printStackTrace();

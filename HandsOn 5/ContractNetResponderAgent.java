@@ -62,6 +62,7 @@ public class ContractNetResponderAgent extends Agent {
 		MessageTemplate template = MessageTemplate.and(
 				MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET),
 				MessageTemplate.MatchPerformative(ACLMessage.CFP) );
+		//this isnt the dispatchers guy of a parallel responder
 		addBehaviour(new ContractNetResponder(this, template) {
 			
 			@Override
@@ -70,14 +71,14 @@ public class ContractNetResponderAgent extends Agent {
 				ACLMessage propose = cfp.createReply();
 				//so my code do the diagnosis from the content of the proposing call that is the symptom
 				try{
-					clips.build("(defrule diagnosis (enfermedad (nombre ?n) (symptom $? "+cfp.getContent()+" $?)) => (assert (foundDisease (foundName ?n) ) ))");
+					clips.build("(defrule diagnosis (disease (name ?n) (symptom $? "+cfp.getContent()+" $?)) => (assert (foundDisease (foundName ?n) ) ))");
 					clips.run();
 					FactAddressValue fv = clips.findFact("foundDisease");
-					String enfermedad = fv.getSlotValue("foundName").toString();
-					System.out.println("Agent "+getLocalName()+": Proposing "+enfermedad);
+					String disease = fv.getSlotValue("foundName").toString();
+					System.out.println("Agent "+getLocalName()+": Proposing "+disease);
 					
 					propose.setPerformative(ACLMessage.PROPOSE);
-					propose.setContent(String.valueOf(enfermedad));
+					propose.setContent(String.valueOf(disease));//setting the found disease as the proposed diagnosis
 					
 				}catch (Exception e) {
 					e.printStackTrace();
@@ -90,38 +91,65 @@ public class ContractNetResponderAgent extends Agent {
 			@Override
 			protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
 				System.out.println("Agent "+getLocalName()+": Proposal accepted");
+					//int t; variable dummy
+					
 					ACLMessage inform = accept.createReply();
 				 	System.out.println("Agent "+getLocalName()+": Action successfully performed");
+					//this give a treatment from the previous diagnosis, getting the diagnosis from the propose content
 					 try{
-						clips.build("(defrule tratamiento ?f <-(enfermedad (name  "+propose.getContent()+")(tratamiento $?b )) => (assert (foundtratamiento (fact-slot-value ?f tratamiento  ) )))");
+						//clips.build("(defrule treatment (disease (name  "+propose.getContent()+")(treatment $?b )) => (printout t \"treatment \" ?b crlf))");
+						clips.build("(defrule treatment ?f <-(disease (name  "+propose.getContent()+")(treatment $?b )) => (assert (foundTreatment (fact-slot-value ?f treatment  ) )))");
 						clips.run();
-						FactAddressValue fv = clips.findFact("foundtratamiento");
-						String tratamiento = fv.getSlotValue("implied").toString();
-						System.out.println("Agent "+getLocalName()+": Proposing "+tratamiento);
+						//t=1;
+						FactAddressValue fv = clips.findFact("foundTreatment");
+						String treatment = fv.getSlotValue("implied").toString();//implied see docs basic programming
+						System.out.println("Agent "+getLocalName()+": Proposing "+treatment);
 						inform.setPerformative(ACLMessage.INFORM);
-						inform.setContent(String.valueOf(tratamiento));
+						inform.setContent(String.valueOf(treatment));//setting found treatment to inform patient
 					}catch (Exception e) {
 						e.printStackTrace();
 				 	}
 
 					return inform;
+
+
 			}
+
 			protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
 				System.out.println("Agent "+getLocalName()+": Proposal rejected");
 			}
 		} );
 	}
+
+/* en realidad deberia poner la propuesta de tratamiento y diagnosis aqui pero no me dio mucho tiempo de probaarlo
+	private int evaluateAction() {
+		
+		return (int) (Math.random() * 10);
+	}
+
+	private boolean performAction() {
+		// Simulate action execution by generating a random number
+		return (Math.random() > 0.2);
+	}
+*/
+//metodo para cargar la base de conocimiento
 	public void loadKnowledge(){
 		System.out.println("loading knowledge base"); 
                 try{
-                    clips.build("(deftemplate enfermedad(slot nombre)(multislot sintomas)(multislot tratamiento))");
+                    clips.build("(deftemplate disease(slot name)(multislot symptom)(multislot treatment))");
                     clips.build("(deftemplate foundDisease (slot foundName))");
-				
-                    clips.build("(deffacts enfermedades"
-                    +"(enfermedad (nombre Gripe) (sintomas \"Dificultad para respirar\" \"Malestar general\" \"Nariz tapada\")"
-                    +"(tratamiento \"AntiFlu\"))"
-                    
-                
+					
+					//clips.build("(deftemplate foundTreatment (multislot foundT))");
+                   
+                    clips.build("(deffacts diseases"
+                    +"(disease (name dolor de cabeza) (symptom \"Sensibilidad a la luz\" \"perdida de apétito\")"
+                    +"(treatment \"guardar reposo\" \"tomar paracetamol\" \"masajes suaves\" \"tomar agua\"))"
+                    +"(disease (name resfriado) (symptom \"gripe\" \"estornudos\" \"dolor de garganta\" \"tos\" \"congestion\")"
+                    +"(treatment \"permanecer en descanso\" \"mantenerse hidratado\"))"
+                    +"(disease (name conjunctivitis) (symptom \"ojos rojos\" \"inflamacion de los parpados\" \"irritacion en el ojo\")" 
+                    +"(treatment   \"lagrimeo\" \"aplicar gotas\" \"aplicar compresas\" \"antihistamine en los ojos\" ))"
+                    +"(disease (name faringitis) (symptom \"dolor de garganta\" \"garganta seca\" \"garganta irritada\") "
+                    +"(treatment \"beber fluidos\" \"gargaras de agua\" \"paracetamol\" \"acudir al doctor\")))");
                     clips.reset();
                 } catch (Exception e) {
                   e.printStackTrace();

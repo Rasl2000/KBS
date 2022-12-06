@@ -52,20 +52,23 @@ public class ContractNetInitiatorAgent extends Agent {
 	String name;
 
 	protected void setup() { 
+  	// Read names of responders as arguments
   	Object[] args = getArguments();
   	if (args != null && args.length > 0) {
   		nResponders = args.length;
   		System.out.println("Trying to delegate diagnosis to one out of "+nResponders+" responders.");
-
+  		
+  		// Fill the CFP message
   		ACLMessage msg = new ACLMessage(ACLMessage.CFP);
   		for (int i = 0; i < args.length; ++i) {
   			msg.addReceiver(new AID((String) args[i], AID.ISLOCALNAME));
   		}
 			msg.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
+			// We want to receive a reply in 10 secs
 			msg.setReplyByDate(new Date(System.currentTimeMillis() + 10000));
-			System.out.println("Ingresar sintoma: ");
+			System.out.println("Enter one of your symptoms in the list: ");
 			name = console.nextLine();
-			msg.setContent("\""+name+"\"")
+			msg.setContent("\""+name+"\"");//hardcoded symptom
 			
 			addBehaviour(new ContractNetInitiator(this, msg) {
 				
@@ -79,18 +82,23 @@ public class ContractNetInitiatorAgent extends Agent {
 				
 				protected void handleFailure(ACLMessage failure) {
 					if (failure.getSender().equals(myAgent.getAMS())) {
+						// FAILURE notification from the JADE runtime: the receiver
+						// does not exist
 						System.out.println("Responder does not exist");
 					}
 					else {
 						System.out.println("Agent "+failure.getSender().getName()+" failed");
 					}
+					// Immediate failure --> we will not receive a response from this agent
 					nResponders--;
 				}
 				
 				protected void handleAllResponses(Vector responses, Vector acceptances) {
 					if (responses.size() < nResponders) {
+						// Some responder didn't reply within the specified timeout
 						System.out.println("Timeout expired: missing "+(nResponders - responses.size())+" responses");
 					}
+					// Evaluate proposals.
 					String bestProposal = "";
 					AID bestProposer = null;
 					ACLMessage accept = null;
@@ -102,6 +110,7 @@ public class ContractNetInitiatorAgent extends Agent {
 							reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
 							acceptances.addElement(reply);
 							String proposal = msg.getContent();
+							//acepto la primer propuesta medica porque estoy muy enfermo
 							if (proposal != bestProposal) {
 								bestProposal = proposal;
 								bestProposer = msg.getSender();
@@ -109,20 +118,22 @@ public class ContractNetInitiatorAgent extends Agent {
 							}
 						}
 					}
+					// Accept the proposal of the best proposer
 					if (accept != null) {
-						System.out.println("Se acepto la proposicion "+bestProposal+" del responder "+bestProposer.getName());
+						System.out.println("Accepting proposal "+bestProposal+" from responder "+bestProposer.getName());
 						accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
 					}						
 				}
+				
 				protected void handleInform(ACLMessage inform) {
-					System.out.println("El agente "+inform.getSender().getName()+" respondio correctamente"+inform.getContent());
+					System.out.println("Agent "+inform.getSender().getName()+" successfully performed the requested action. "+inform.getContent());
 					
-					System.out.println("El tratamiento para usted es "+inform.getContent());
+					System.out.println("This is your treatment "+inform.getContent());
 				}
 			} );
   	}
   	else {
-  		System.out.println("No se puedo conectar :c");
+  		System.out.println("No responder specified.");
   	}
   } 
 }

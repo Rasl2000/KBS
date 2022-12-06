@@ -117,8 +117,10 @@ public class ContractNetResponderAgent1 extends Agent {
                     clips.build("(deftemplate enfermedad(slot nombre)(multislot sintomas)(multislot tratamiento))");
                     clips.build("(deftemplate foundDisease (slot foundName))");
                     clips.build("(deffacts enfermedades"
-                    +"(enfermedad (nombre sarampion) (sintomas \"rinitis\" \"conjuntivitis\" \"faringitis\" \"tos seca\")" 
-                    +"(tratamiento \"vitamina a\"))"
+
+                    +"(enfermedad (nombre sarampion) (sintomas \"rinitis\" \"tos seca\")" 
+                    +"(tratamiento \"vitamina A\"))"
+					
                     clips.reset();
                 } catch (Exception e) {
                   e.printStackTrace();
